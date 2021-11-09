@@ -20,6 +20,7 @@ public class ScanStart : MonoBehaviour
     public GameObject text; // start text
     public GameObject scanOverlay; //start overlay
 
+    public GameObject MainController;
     //setup logic to capture camera video
     private void Start()
     {
@@ -34,7 +35,8 @@ public class ScanStart : MonoBehaviour
         }
 
         for(int i = 0; i < devices.Length; i++)
-        {
+        {   
+            Debug.Log(devices[i]);
             if (!devices[i].isFrontFacing)
             {
                 backCam = new WebCamTexture(devices[i].name, Screen.width, Screen.height,60);
@@ -74,23 +76,15 @@ public class ScanStart : MonoBehaviour
         //if result found that close this view and start ar application
         if (result)
         {
+            /*
             ardevice.GetComponent<ARCoreSession>().enabled = true;
             background.gameObject.SetActive(false);
             text.SetActive(false);
             scanOverlay.SetActive(false);
             this.gameObject.SetActive(false);
+            */
+            MainController.GetComponent<MainController>().FinishScan();
+            text.SetActive(false);
         } 
     }
-
-    //used for testing
-    public void OnClick()
-    {
-        ardevice.GetComponent<ARCoreSession>().enabled = true;
-        background.gameObject.SetActive(false);
-        text.SetActive(false);
-        scanOverlay.SetActive(false);
-        this.gameObject.SetActive(false);
-    }
-
-    
 }
