@@ -16,32 +16,24 @@ public class ImageRecognition : MonoBehaviour
     public GameObject calibrationLocations; // transforms with calibration positions
     public GameObject person; // person indicator
     public GameObject controller; // indoornavcontroller object
+    public GameObject MainController;
 
-    public Button btn; // scan button
-
-    private bool searchingForMarker = false; // bool to say if looking for marker
+    public bool ScannerActive = true; // bool to say if scanner is active
     private bool first = true; // bool to fix multiple scan findings
-    private int counter = 0; // counter used to change button color
-    private Color normColor; // standard button color set at start
-    private Color pressedColor; // pressed button color set at start
+    public GameObject DebugText;
 
     public Text textField; // information text
-
-    //used to set button colors
-    private void Start()
-    {
-        var colors = btn.colors;
-        normColor = colors.normalColor;
-        pressedColor = colors.pressedColor;
-    }
 
     // Update is called once per frame
     void Update()
     {
-        if (searchingForMarker)
+        /*
+        if (ScannerActive)
         {
+            FitToScanOverlay.SetActive(true);
             Scan();
         }
+        */
     }
 
     /// <summary>
@@ -56,26 +48,29 @@ public class ImageRecognition : MonoBehaviour
                 // No image is available.
                 return;
             }
+            try {
+                // Decode the image using ZXing parser
+                IBarcodeReader barcodeReader = new BarcodeReader();
+                var result = barcodeReader.Decode(bytes, width, height, RGBLuminanceSource.BitmapFormat.Gray8);
+                var resultText = result.Text;
 
-            // Decode the image using ZXing parser
-            IBarcodeReader barcodeReader = new BarcodeReader();
-            var result = barcodeReader.Decode(bytes, width, height, RGBLuminanceSource.BitmapFormat.Gray8);
-            var resultText = result.Text;
-
-            // result action
-            if (first)
-            {
-                Relocate(resultText);
-                first = false;
+                // result action
+                if (first)
+                {
+                    Relocate(resultText);
+                    first = false;
+                }
             }
+            catch (Exception ex) { DebugText.GetComponent<Text>().text = ex.Message; }
         };
 
         CaptureScreenAsync(callback);
     }
 
     // move to person indicator to the new spot
-    private void Relocate(string text)
+    private bool Relocate(string text)
     {
+        bool qrMatched = false;
         text = text.Trim(); //remove spaces
         //find the correct location scanned and move the person to its position
         foreach (Transform child in calibrationLocations.transform)
@@ -83,15 +78,20 @@ public class ImageRecognition : MonoBehaviour
             if(child.name.Equals(text))
             {
                 person.transform.position = child.position;
-                btn.gameObject.GetComponent<Image>().color = normColor;
                 textField.text = "";
+                MainController.GetComponent<MainController>().StartARView();
+                ScannerActive = false;
+                qrMatched = true;
+                DebugText.GetComponent<Text>().text = "QR Matched";
                 break;
             }
         }
-        searchingForMarker = false;
-        FitToScanOverlay.SetActive(false);
+        if (!qrMatched) {
+            textField.text = "Invalid QR";
+            DebugText.GetComponent<Text>().text = "QR Didn't Match";
+        }
+        return qrMatched;
     }
-
     /// <summary>
     /// Capture the screen using CameraImage.AcquireCameraImageBytes.
     /// </summary>
@@ -126,26 +126,6 @@ public class ImageRecognition : MonoBehaviour
         });
     }
 
-    // handle scanmarker button click
-    public void onClick()
-    {
-        counter++;
-        if(counter % 2 == 1)
-        {
-            searchingForMarker = true;
-            FitToScanOverlay.SetActive(true);
-            first = true;
-            btn.gameObject.GetComponent<Image>().color = pressedColor;
-        } else
-        {
-            searchingForMarker = false;
-            FitToScanOverlay.SetActive(false);
-            first = false;
-            btn.gameObject.GetComponent<Image>().color = normColor;
-        }
-
-    }
-
     // is used at start of application to set initial position
     public bool StartPosition(WebCamTexture wt)
     {
@@ -159,12 +139,21 @@ public class ImageRecognition : MonoBehaviour
             if (result != null)
             {
                 Debug.Log("found: " + result.Text);
-                Relocate(result.Text);
-                scanOverlay2.SetActive(false);
-                succeeded = true;
+                DebugText.GetComponent<Text>().text = "Bar Code Reader found: " + result.Text;
+                succeeded = Relocate(result.Text);
             }
         }
         catch (Exception ex) { Debug.LogWarning(ex.Message); }
         return succeeded;
+    }
+
+    void OnDisable() {
+        ScannerActive = false;
+        FitToScanOverlay.SetActive(false);
+    }
+    void OnEnable() {
+        ScannerActive = true;
+        FitToScanOverlay.SetActive(true);
+        first = true;
     }
 }
