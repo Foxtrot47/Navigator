@@ -37,10 +37,15 @@ public class ScanStart : MonoBehaviour
         for(int i = 0; i < devices.Length; i++)
         {   
             Debug.Log(devices[i]);
+            #if PLATFORM_ANDROID
             if (!devices[i].isFrontFacing)
             {
                 backCam = new WebCamTexture(devices[i].name, Screen.width, Screen.height,60);
             }
+            #else
+                backCam = new WebCamTexture(devices[i].name, Screen.width, Screen.height,60);
+            #endif
+
         }
 
         if(backCam == null)
