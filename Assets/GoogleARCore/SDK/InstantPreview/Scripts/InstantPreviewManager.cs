@@ -56,7 +56,7 @@ namespace GoogleARCoreInternal
         public const string InstantPreviewNativeApi = "arcore_instant_preview_unity_plugin";
 
         // Guid is taken from meta file and should never change.
-        private const string k_ApkGuid = "cf7b10762fe921e40a18151a6c92a8a6";
+        private const string k_ApkGuid = "f40f52211bec88c428ac0e456339af5a";
         private const string k_NoDevicesFoundAdbResult = "error: no devices/emulators found";
         private const float k_MaxTolerableAspectRatioDifference = 0.1f;
         private const string k_MismatchedAspectRatioWarningFormatString =
