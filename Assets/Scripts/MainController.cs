@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using GoogleARCore;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,7 @@ public class MainController : MonoBehaviour {
     public GameObject MarkerScanner;
     public GameObject ScanStart;
     public GameObject ARCoreDevice;
+    public GameObject ARCoreCamera;
     public GameObject NavigationController;
 
     public GameObject MinimapFrame;
@@ -79,34 +81,42 @@ public class MainController : MonoBehaviour {
     void StartScanner() {
         DebugText.GetComponent<Text>().text = "Trying to start Scanner";
         MainState = State.ScannerActive;
+
+        // Disable AR Core Components and related scripts first
         ARCoreDevice.SetActive(false);
         NavigationController.SetActive(false);
+        ARCoreDevice.GetComponent<ARCoreSession>().enabled = false;
+        ARCoreCamera.GetComponent<Camera>().enabled = false;
+        MinimapFrame.SetActive(false);
+
+        // Then enabled all QR Code Scanner Scripts and UI elements
         MarkerScanner.SetActive(true);
         ScanOverlay.SetActive(true);
         ScanStart.SetActive(true);
         MarkerScanner.GetComponent<ImageRecognition>().ScannerActive = true;
         QRBackImage.SetActive(true);
-        MinimapFrame.SetActive(false);
         DebugText.GetComponent<Text>().text = "Started Scanner";
-
     }
     public void StartARView() {
         if (MainState != State.Starting && MainState != State.Relocating) {
             DebugText.GetComponent<Text>().text = "Trying to start AR View";
             MainState = State.ARView;
-            ARCoreDevice.SetActive(true);
-            NavigationController.SetActive(true);
+
+            // Disable all QR Code Scanner Scripts and UI elements
             ScanStart.SetActive(false);
-            MarkerScanner.SetActive(false);
             ScanOverlay.SetActive(false);
+            MarkerScanner.SetActive(false);
             MarkerScanner.GetComponent<ImageRecognition>().ScannerActive = false;
             QRBackImage.SetActive(false);
-            MinimapFrame.SetActive(true);
 
-            // Enabling CameraView
-            ARCoreDevice.GetComponent<Camera>().enabled = true;
+            // Then enable AR Core Components and related scripts
+            ARCoreDevice.SetActive(true);
+            ARCoreDevice.GetComponent<ARCoreSession>().enabled = true;
+            ARCoreCamera.GetComponent<Camera>().enabled = true;
             fullscreenCamera.targetTexture = texture;
             fullscreenCamera.orthographicSize = 7;
+            NavigationController.SetActive(true);
+            MinimapFrame.SetActive(true);
             DebugText.GetComponent<Text>().text = "Started AR View";
         }
     }
@@ -114,25 +124,28 @@ public class MainController : MonoBehaviour {
         if (MainState == State.ARView || MainState == State.ManualRelocate) {
             DebugText.GetComponent<Text>().text = "Trying to start Map View";
             MainState = State.MapView;
-            ARCoreDevice.SetActive(true);
-            NavigationController.SetActive(true);
-            MarkerScanner.SetActive(false);
+
+            // Disable all QR Code Scanner Scripts and UI elements
+            MarkerScanner.GetComponent<ImageRecognition>().ScannerActive = false;
+            MinimapFrame.SetActive(false);
+            QRBackImage.SetActive(false);
             ScanStart.SetActive(false);
             ScanOverlay.SetActive(false);
-            MarkerScanner.GetComponent<ImageRecognition>().ScannerActive = false;
-            QRBackImage.SetActive(false);
-            MinimapFrame.SetActive(false);
+            //Also disable Minimap cuz we don't need it on Map View
+            MarkerScanner.SetActive(false);
 
-            // Enabling MapView
-            ARCoreDevice.GetComponent<Camera>().enabled = false;
+            //Enable AR Core and nav scripts again and show Overhead camera over player
+            ARCoreDevice.SetActive(true);
+            ARCoreCamera.GetComponent<Camera>().enabled = true;
             fullscreenCamera.targetTexture = null;
             fullscreenCamera.orthographicSize = 15;
+            NavigationController.SetActive(true);
             DebugText.GetComponent<Text>().text = "Started Map View";
         }
     }
     public void ScanButtonClick() {
         //if( MainState == State.ARView || MainState == State.MapView || MainState == State.ManualRelocate ) {
-            DebugText.GetComponent<Text>().text = "Button Click Registered";
+            DebugText.GetComponent<Text>().text = "Scan Button Clicked";
             StartScanner();
         //}
     }
