@@ -74,7 +74,7 @@
             {
             // The initial forward vector of the sphere must be aligned with the initial camera direction in the XZ plane.
             // We apply translation only in the XZ plane.
-            CameraTarget.transform.Translate(deltaPosition.x, 0.0f, deltaPosition.z);
+            CameraTarget.transform.Translate(deltaPosition.z, 0.0f, deltaPosition.x,Space.Self);
             // Set the pose rotation to be used in the CameraFollow script
             FirstPersonCamera.GetComponent<FollowTarget>().targetRot = Frame.Pose.rotation;
             }
