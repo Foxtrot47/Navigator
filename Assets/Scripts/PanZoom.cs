@@ -10,72 +10,73 @@ public class PanZoom : MonoBehaviour
     public float orthoZoomSpeed = 0.01f;
     public float zoomOutMin = 5;
     public float zoomOutMax = 15;
+    public bool enableTouch = false;
     public GameObject dropdown; //dropdown UI, needed to stop panning when scrolling in dropdown
-
+    public Camera ChosenCamera;
     private Vector3 touchStart; // start of finger touch
 
     void Update()
     {
-        // mouse of fingertouch moves camera
-        if (Input.GetMouseButtonDown(0))
-        {
-            touchStart = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        }
-
-        // detect double tap
-        for (var i = 0; i < Input.touchCount; ++i)
-        {
-            if (Input.GetTouch(i).phase == TouchPhase.Began)
+        if(enableTouch) {
+            // mouse of fingertouch moves camera
+            if (Input.GetMouseButtonDown(0))
             {
-                if (Input.GetTouch(i).tapCount == 2)
+                touchStart = ChosenCamera.ScreenToWorldPoint(Input.mousePosition);
+            }
+
+            // detect double tap
+            for (var i = 0; i < Input.touchCount; ++i)
+            {
+                if (Input.GetTouch(i).phase == TouchPhase.Began)
                 {
-                    Debug.Log("Double tap");
-                    StartCoroutine(Pause());
+                    if (Input.GetTouch(i).tapCount == 2)
+                    {
+                        StartCoroutine(Pause());
+                    }
                 }
             }
-        }
 
-        // If there are two touches on the device...
-        if (Input.touchCount == 2)
-        {
-            // Store both touches.
-            Touch touchZero = Input.GetTouch(0);
-            Touch touchOne = Input.GetTouch(1);
-
-            // Find the position in the previous frame of each touch.
-            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
-            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
-
-            // Find the magnitude of the vector (the distance) between the touches in each frame.
-            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
-            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
-
-            // Find the difference in the distances between each frame.
-            float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag;
-
-            Zoom(deltaMagnitudeDiff * orthoZoomSpeed);
-        }
-        //single press pan with camera, only if not scrolling in dropdown
-        else if (Input.GetMouseButton(0))
-        {
-            bool selectingDest = false;
-            foreach (Transform child in dropdown.transform)
+            // If there are two touches on the device...
+            if (Input.touchCount == 2)
             {
-                if (child.name.Equals("Dropdown List"))
+                // Store both touches.
+                Touch touchZero = Input.GetTouch(0);
+                Touch touchOne = Input.GetTouch(1);
+
+                // Find the position in the previous frame of each touch.
+                Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+                Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
+
+                // Find the magnitude of the vector (the distance) between the touches in each frame.
+                float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+                float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+
+                // Find the difference in the distances between each frame.
+                float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag;
+
+                Zoom(deltaMagnitudeDiff * orthoZoomSpeed);
+            }
+            //single press pan with camera, only if not scrolling in dropdown
+            else if (Input.GetMouseButton(0))
+            {
+                bool selectingDest = false;
+                foreach (Transform child in dropdown.transform)
                 {
-                    Debug.Log("Selecting dest");
-                    selectingDest = true;
-                    break;
+                    if (child.name.Equals("Dropdown List"))
+                    {
+                        selectingDest = true;
+                        break;
+                    }
                 }
+                if (!selectingDest)
+                {
+                    Vector3 direction = touchStart - ChosenCamera.ScreenToWorldPoint(Input.mousePosition);
+                    ChosenCamera.transform.position += direction;
+                }
+            } 
+            //zoom with scroll wheel
+            Zoom(Input.GetAxis("Mouse ScrollWheel"));
             }
-            if (!selectingDest)
-            {
-                Vector3 direction = touchStart - Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                Camera.main.transform.position += direction;
-            }
-        } 
-        //zoom with scroll wheel
-        Zoom(Input.GetAxis("Mouse ScrollWheel"));
     }
 
     //wait some second before handling double tap
@@ -83,12 +84,12 @@ public class PanZoom : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
-        Camera.main.transform.localPosition = new Vector3(0, 20, 0);
+        ChosenCamera.transform.localPosition = new Vector3(0, 20, 0);
     }
 
     // zoom with camera
     private void Zoom(float incr)
     {
-        Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize - incr, zoomOutMin, zoomOutMax);
+        ChosenCamera.orthographicSize = Mathf.Clamp(ChosenCamera.orthographicSize - incr, zoomOutMin, zoomOutMax);
     }
 }

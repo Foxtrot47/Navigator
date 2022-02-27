@@ -20,7 +20,6 @@ public class ImageRecognition : MonoBehaviour
 
     public bool ScannerActive = true; // bool to say if scanner is active
     private bool first = true; // bool to fix multiple scan findings
-    public GameObject DebugText;
 
     public Text textField; // information text
 
@@ -61,7 +60,7 @@ public class ImageRecognition : MonoBehaviour
                     first = false;
                 }
             }
-            catch (Exception ex) { DebugText.GetComponent<Text>().text = ex.Message; }
+            catch (Exception ex) { Debug.Log(ex.Message); }
         };
 
         CaptureScreenAsync(callback);
@@ -78,17 +77,16 @@ public class ImageRecognition : MonoBehaviour
             if(child.name.Equals(text))
             {
                 person.transform.position = child.position;
+                person.transform.rotation = child.rotation;
                 textField.text = "";
                 MainController.GetComponent<MainController>().StartARView();
                 ScannerActive = false;
                 qrMatched = true;
-                DebugText.GetComponent<Text>().text = "QR Matched";
                 break;
             }
         }
         if (!qrMatched) {
             textField.text = "Invalid QR";
-            DebugText.GetComponent<Text>().text = "QR Didn't Match";
         }
         return qrMatched;
     }
@@ -139,7 +137,6 @@ public class ImageRecognition : MonoBehaviour
             if (result != null)
             {
                 Debug.Log("found: " + result.Text);
-                DebugText.GetComponent<Text>().text = "Bar Code Reader found: " + result.Text;
                 succeeded = Relocate(result.Text);
             }
         }
